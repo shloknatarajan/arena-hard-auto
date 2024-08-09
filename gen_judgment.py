@@ -33,7 +33,7 @@ def get_score(judgment, pattern, pairwise=True):
 
 
 # get answer from model
-def get_answer(model, conv, temperature, max_tokens, endpoint_dict=None):
+def get_judgment_answer(model, conv, temperature, max_tokens, endpoint_dict=None):
     api_dict = get_endpoint(endpoint_dict["endpoints"])
 
     if endpoint_dict["api_type"] == "anthropic":
@@ -94,7 +94,7 @@ def judgment(**args):
 
         judgment = ""
         for _ in range(configs['number_of_judgment_attempts']):
-            new_judgment = get_answer(
+            new_judgment = get_judgment_answer(
                 endpoint_info["model_name"],
                 conv,
                 configs["temperature"],
