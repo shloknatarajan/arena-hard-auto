@@ -101,7 +101,7 @@ def judgment(**args):
         judgment = ""
         for _ in range(configs['number_of_judgment_attempts']):
             new_judgment = get_judgment_answer(
-                endpoint_info["model_name"],
+                model,
                 conv,
                 configs["temperature"],
                 configs["max_tokens"],
@@ -129,17 +129,7 @@ def judgment(**args):
     with open(output_file, "a") as f:
         f.write(json.dumps(output, ensure_ascii=False) + "\n")
 
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--setting-file", type=str, default="config/judge_config.yaml")
-    parser.add_argument("--endpoint-file", type=str, default="config/api_config.yaml")
-    args = parser.parse_args()
-    print(args)
-
-    configs = make_config(args.setting_file)
-    endpoint_list = make_config(args.endpoint_file)
-
+def main(configs, endpoint_list):
     print(f'judge model: {configs["judge_model"]}, baseline: {configs["baseline"]}, baseline model: {configs["baseline_model"]}, reference: {configs["reference"]}, '
           + f'reference models: {configs["ref_model"]}, temperature: {configs["temperature"]}, max tokens: {configs["max_tokens"]}, pairwise: {configs["pairwise"]}')
 
@@ -217,3 +207,14 @@ if __name__ == "__main__":
             concurrent.futures.as_completed(futures), total=len(futures)
         ):
             future.result()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--setting-file", type=str, default="config/judge_config.yaml")
+    parser.add_argument("--endpoint-file", type=str, default="config/api_config.yaml")
+    args = parser.parse_args()
+    print(args)
+
+    configs = make_config(args.setting_file)
+    endpoint_list = make_config(args.endpoint_file)
+    main(configs, endpoint_list)
