@@ -129,16 +129,18 @@ def judgment(**args):
     with open(output_file, "a") as f:
         f.write(json.dumps(output, ensure_ascii=False) + "\n")
 
-def main(configs, endpoint_list):
+def main(configs, endpoint_list, save_directory:str = "data", question_file_path: str = None):
     print(f'judge model: {configs["judge_model"]}, baseline: {configs["baseline"]}, baseline model: {configs["baseline_model"]}, reference: {configs["reference"]}, '
           + f'reference models: {configs["ref_model"]}, temperature: {configs["temperature"]}, max tokens: {configs["max_tokens"]}, pairwise: {configs["pairwise"]}')
 
     if configs["regex_pattern"]:
         pattern = re.compile(configs["regex_pattern"])
 
-    question_file = os.path.join("data", configs["bench_name"], "question.jsonl")
-    answer_dir = os.path.join("data", configs["bench_name"], "model_answer")
-    ref_answer_dir = os.path.join("data", configs["bench_name"], "reference_answer")
+    question_file = os.path.join(save_directory, configs["bench_name"], "question.jsonl")
+    if question_file_path:
+        question_file = question_file_path
+    answer_dir = os.path.join(save_directory, configs["bench_name"], "model_answer")
+    ref_answer_dir = os.path.join(save_directory, configs["bench_name"], "reference_answer")
 
     questions = load_questions(question_file)
     model_answers = load_model_answers(answer_dir)
@@ -152,7 +154,7 @@ def main(configs, endpoint_list):
         ref_answers = [ref_answers[model] for model in configs["ref_model"]]
     
     output_files = {}
-    output_dir = f"data/{configs['bench_name']}/model_judgment/{configs['judge_model']}"
+    output_dir = f"{save_directory}/{configs['bench_name']}/model_judgment/{configs['judge_model']}-judge/{configs['baseline_model']}-baseline/"
     for model in models:
         output_files[model] = os.path.join(
             output_dir,
@@ -253,7 +255,7 @@ if __name__ == "__main__":
 
     configs = make_config(args.setting_file)
     endpoint_list = make_config(args.endpoint_file)
-    main(configs, endpoint_list)
+    main(configs, endpoint_list, 'data')
 
     ## Example for running with programmatic config generation
     # model_list = [
