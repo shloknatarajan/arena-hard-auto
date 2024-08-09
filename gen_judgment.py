@@ -4,7 +4,7 @@ import argparse
 import os
 import re
 import concurrent.futures
-
+from loguru import logger
 from tqdm import tqdm
 
 from utils import (
@@ -12,6 +12,7 @@ from utils import (
     chat_completion_openai,
     chat_completion_openai_azure,
     chat_completion_anthropic,
+    chat_completion_together_ai,
     load_questions,
     load_model_answers,
     get_endpoint,
@@ -35,12 +36,17 @@ def get_score(judgment, pattern, pairwise=True):
 # get answer from model
 def get_judgment_answer(model, conv, temperature, max_tokens, endpoint_dict=None):
     api_dict = get_endpoint(endpoint_dict["endpoints"])
-
+    output = None
     if endpoint_dict["api_type"] == "anthropic":
         output = chat_completion_anthropic(model, conv, temperature, max_tokens)
     elif endpoint_dict["api_type"] == "azure":
         output = chat_completion_openai_azure(model, conv, temperature, max_tokens, api_dict)
+    elif endpoint_dict["api_type"] == "together":
+        output = chat_completion_together_ai(model, conv, temperature, max_tokens)
+    elif endpoint_dict["api_type"] == "openai":
+        output = chat_completion_openai(model, conv, temperature, max_tokens, api_dict)
     else:
+        logger.error("get_judgment_answer: api_type is not supported. Defaulting to calling OpenAI")
         output = chat_completion_openai(model, conv, temperature, max_tokens, api_dict)
     return output
 

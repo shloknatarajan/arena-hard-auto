@@ -4,11 +4,13 @@ import time
 import yaml
 import random
 import requests
-import together
+from together import Together
+import anthropic
 
 from typing import Optional
 from glob import glob
 
+# Set environment variables
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -173,7 +175,6 @@ def chat_completion_openai_azure(
 
 
 def chat_completion_anthropic(model, messages, temperature, max_tokens, api_dict=None):
-    import anthropic
 
     if api_dict:
         api_key = api_dict["api_key"]
@@ -336,7 +337,7 @@ def chat_completion_huggingface(messages, pipeline, generation_config):
 
 
 def chat_completion_together_ai(
-    model, candidate_count, messages, temperature, max_tokens
+    model, messages, temperature, max_tokens
 ):
 
     client = Together(api_key=os.environ.get("TOGETHER_API_KEY"))
@@ -360,7 +361,7 @@ def chat_completion_together_ai(
     return output
 
 
-def chat_completion_together_ai_v2(
+def chat_completion_together_ai_sampling(
     model, models, candidate_count, messages, temperature, max_tokens
 ):
 
