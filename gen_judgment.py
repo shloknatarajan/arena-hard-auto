@@ -211,9 +211,8 @@ def main(configs, endpoint_list, save_directory:str = "data", question_file_path
             future.result()
 
 """
-This code is specific to archon
-Allows importing functions and running arena
-outside of the repo itself
+Allows importing functions and running arena outside of the repo itself
+Currently setup for pairwise judging
 """
 def generate_pairwise_config(baseline: str, judge: str, model_list: list[str] = None, temperature: float = 0, max_tokens: int = 4096):
     return {
@@ -256,11 +255,3 @@ if __name__ == "__main__":
     configs = make_config(args.setting_file)
     endpoint_list = make_config(args.endpoint_file)
     main(configs, endpoint_list, 'data')
-
-    ## Example for running with programmatic config generation
-    # model_list = [
-    #     'gpt-4-turbo'
-    # ]
-    # endpoint_list = endpoint_generation()
-    # configs = generate_pairwise_config(baseline='gpt-4-0314', judge='claude-3-5-sonnet-20240620', model_list=model_list)
-    # main(configs, endpoint_list)
