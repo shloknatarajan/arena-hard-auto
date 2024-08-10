@@ -113,14 +113,17 @@ def get_win_rate_column(df, column, baseline="gpt-4-0314"):
     return win_rate_table[baseline].fillna(0.5).apply(lambda x: round(x * 100, 2))
 
 
-def get_battles_from_judgment(judge_name, first_game_only=False, WEIGHT=3, baseline_model="gpt-4-0314"):
+def get_battles_from_judgment(judge_name, first_game_only=False, WEIGHT=3, baseline_model: str ="gpt-4-0314", save_directory: str = 'arena-data'):
     arena_hard_battles = pd.DataFrame()
     
     print("Turning judgment results into battles...")
 
-    directory = f"data/arena-hard-v0.1/model_judgment/{judge_name}"
+    directory = f"{save_directory}/arena-hard-v0.1/model_judgment/{judge_name}-judge/{baseline_model}-baseline/"
+    output_file = 'arena_hard_battles.jsonl'
     assert os.path.exists(directory)
     for file in tqdm(glob(f"{directory}/*jsonl")):
+        if output_file in file or 'bootstrapping' in file:
+            continue
         df = pd.read_json(file, lines=True)
 
         for _, row in df.iterrows():
@@ -176,44 +179,33 @@ def get_battles_from_judgment(judge_name, first_game_only=False, WEIGHT=3, basel
 
                 if weight:
                     arena_hard_battles = pd.concat([arena_hard_battles, pd.DataFrame([output] * weight)])
-    arena_hard_battles.to_json("data/arena_hard_battles.jsonl", lines=True, orient="records")
+    arena_hard_battles.to_json(f"{directory}/{output_file}", lines=True, orient="records")
     return arena_hard_battles
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--bench-name", type=str, default="arena-hard-v0.1")
-    parser.add_argument("--judge-name", type=str, default="gpt-4-1106-preview")
-    parser.add_argument("--baseline", type=str, default="gpt-4-0314")
-    parser.add_argument("--load-battles", action="store_true")
-    parser.add_argument("--load-bootstrap", action="store_true")
-    parser.add_argument("--show-elo", action="store_true")
-    parser.add_argument("--weight", type=int, default=3)
-    parser.add_argument("--num-rounds", type=int, default=100)
-    parser.add_argument("--output", action="store_true")
-    parser.add_argument("--first-game-only", action="store_true")
-    args = parser.parse_args()
-    print(args)
-    assert not args.load_bootstrap or (args.load_battles and args.load_bootstrap), "If loading prexisting bootstrapping data, you must also load preexisting battles."
-
-    answer_dir = os.path.join("data", args.bench_name, "model_answer")
-    model_answers = load_model_answers(answer_dir)
+def rank_model_performance(bench_name="arena-hard-v0.1", judge_name="gpt-4-1106-preview", baseline="gpt-4-0314", 
+                     load_battles=False, load_bootstrap=False, show_elo=False, weight=3, 
+                     num_rounds=100, output=False, first_game_only=False, save_directory="arena-data"):
     
-    if args.load_battles:
-        assert os.path.exists("data/arena_hard_battles.jsonl")
-        battles = pd.read_json("data/arena_hard_battles.jsonl", lines=True)
+    assert not load_bootstrap or (load_battles and load_bootstrap), "If loading prexisting bootstrapping data, you must also load preexisting battles."
+    answer_dir = os.path.join(save_directory, bench_name, "model_answer")
+    model_answers = load_model_answers(answer_dir)
+    output_directory = os.path.join(save_directory, "arena-hard-v0.1", "model_judgment", f"{judge_name}-judge", f"{baseline}-baseline")
+    if load_battles:
+        assert os.path.exists(os.path.join(output_directory, 'arena_hard_battles.jsonl'))
+        battles = pd.read_json(os.path.join(output_directory, 'arena_hard_battles.jsonl'), lines=True)
     else:
-        battles = get_battles_from_judgment(args.judge_name, args.first_game_only, args.weight, args.baseline)
+        battles = get_battles_from_judgment(judge_name, first_game_only, weight, baseline)
         
-    bootstrap_online_elo = compute_mle_elo(battles, baseline_model=args.baseline)
+    bootstrap_online_elo = compute_mle_elo(battles, baseline_model=baseline)
 
 
-    if args.load_bootstrap:
-        bootstrap_elo_lu = pd.read_json("data/bootstrapping_results.jsonl", lines=True)
+    if load_bootstrap:
+        bootstrap_elo_lu = pd.read_json(f"{output_directory}/bootstrapping_results.jsonl", lines=True)
     else:
         np.random.seed(42)
-        bootstrap_elo_lu = get_bootstrap_result(battles, compute_mle_elo, args.num_rounds, args.baseline)
-        bootstrap_elo_lu.to_json("data/bootstrapping_results.jsonl", lines=True, orient="records")
+        bootstrap_elo_lu = get_bootstrap_result(battles, compute_mle_elo, num_rounds, baseline)
+        bootstrap_elo_lu.to_json(f"{output_directory}/bootstrapping_results.jsonl", lines=True, orient="records")
 
     stats = pd.DataFrame()
     stats["results"] = None
@@ -237,11 +229,11 @@ if __name__ == "__main__":
         stats.at[i, "avg_tokens"] = int(length)
         stats.at[i, "results"] = bootstrap_elo_lu[model].tolist()
     
-    if not args.show_elo:
+    if not show_elo:
         stats.sort_values(by="model", inplace=True)
-        stats["score"] = get_win_rate_column(stats, "score", args.baseline).tolist()
-        stats["lower"] = get_win_rate_column(stats, "lower", args.baseline).tolist()
-        stats["upper"] = get_win_rate_column(stats, "upper", args.baseline).tolist()
+        stats["score"] = get_win_rate_column(stats, "score", baseline).tolist()
+        stats["lower"] = get_win_rate_column(stats, "lower", baseline).tolist()
+        stats["upper"] = get_win_rate_column(stats, "upper", baseline).tolist()
         decimal = 1
     else:
         decimal = 0
@@ -252,7 +244,7 @@ if __name__ == "__main__":
         interval = str((round(row['lower'] - row['score'], decimal), round(row['upper'] - row['score'], decimal)))
         print(f"{row['model'] : <30} | score: {round(row['score'], decimal) : ^5} | 95% CI: {interval : ^12} | average #tokens: {int(row['avg_tokens'])}")
 
-    if args.output:
+    if output:
         cur_date = datetime.datetime.now()
         date_str = cur_date.strftime("%Y%m%d")
         stats = stats.drop(columns=['results'])
@@ -274,3 +266,23 @@ if __name__ == "__main__":
         stats = stats.loc[:,col_list]
         stats['date'] = date_str[:4] + '-' + date_str[4:6] + '-' + date_str[6:]
         stats.to_csv(f"leaderboard/arena_hard_leaderboard_{date_str}.csv", index=False)
+
+    return list(stats['model']) # return power ranking of models
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--bench-name", type=str, default="arena-hard-v0.1")
+    parser.add_argument("--judge-name", type=str, default="gpt-4-1106-preview")
+    parser.add_argument("--baseline", type=str, default="gpt-4-0314")
+    parser.add_argument("--load-battles", action="store_true")
+    parser.add_argument("--load-bootstrap", action="store_true")
+    parser.add_argument("--show-elo", action="store_true")
+    parser.add_argument("--weight", type=int, default=3)
+    parser.add_argument("--num-rounds", type=int, default=100)
+    parser.add_argument("--output", action="store_true")
+    parser.add_argument("--first-game-only", action="store_true")
+    parser.add_argument("--save-directory", type=str, default="arena-data")
+    args = parser.parse_args()
+    print(args)
+    power_ranking = rank_model_performance(**vars(args))
+    print(f"Power Ranking: {power_ranking}")

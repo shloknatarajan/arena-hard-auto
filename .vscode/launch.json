@@ -17,6 +17,14 @@
             "request": "launch",
             "program": "${workspaceFolder}/gen_judgment.py",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "show result",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/show_result.py",
+            "console": "integratedTerminal",
+            "args": ["--judge-name", "claude-3-5-sonnet-20240620", "--baseline", "gpt-4-0314"]
         }
     ]
 }

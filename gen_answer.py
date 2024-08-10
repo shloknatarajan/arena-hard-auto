@@ -115,7 +115,7 @@ if __name__ == "__main__":
     settings = make_config(args.setting_file)
     endpoint_list = make_config(args.endpoint_file)
 
-    existing_answer = load_model_answers(os.path.join("data", settings["bench_name"], "model_answer"))
+    existing_answer = load_model_answers(os.path.join("arena-data", settings["bench_name"], "model_answer"))
     
     print(settings)
 
@@ -123,10 +123,10 @@ if __name__ == "__main__":
         assert model in endpoint_list
         endpoint_info = endpoint_list[model]
 
-        question_file = os.path.join("data", settings["bench_name"], "question.jsonl")
+        question_file = os.path.join("arena-data", settings["bench_name"], "question.jsonl")
         questions = load_questions(question_file)
 
-        answer_file = os.path.join("data", settings["bench_name"], "model_answer", f"{model}.jsonl")
+        answer_file = os.path.join("arena-data", settings["bench_name"], "model_answer", f"{model}.jsonl")
         print(f"Output to {answer_file}")
 
         if "parallel" in endpoint_info:

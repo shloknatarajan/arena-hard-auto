@@ -349,13 +349,13 @@ if __name__ == "__main__":
 
     configs = make_config(args.config_file)
 
-    question_file = f"data/{configs['bench_name']}/question.jsonl"
-    answer_dir = f"data/{configs['bench_name']}/model_answer"
+    question_file = f"arena-data/{configs['bench_name']}/question.jsonl"
+    answer_dir = f"arena-data/{configs['bench_name']}/model_answer"
     pairwise_model_judgment_dir = (
-        os.path.join("data", configs["bench_name"], "model_judgment", configs["judge_model"])
+        os.path.join("arena-data", configs["bench_name"], "model_judgment", configs["judge_model"])
     )
     single_model_judgment_dir = (
-        os.path.join("data", configs["bench_name"], "model_judgment", configs["judge_model"])
+        os.path.join("arena-data", configs["bench_name"], "model_judgment", configs["judge_model"])
     )
     # Load questions
     questions = load_questions(question_file)

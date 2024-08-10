@@ -129,7 +129,7 @@ def judgment(**args):
     with open(output_file, "a") as f:
         f.write(json.dumps(output, ensure_ascii=False) + "\n")
 
-def main(configs, endpoint_list, save_directory:str = "data", question_file_path: str = None):
+def generate_judgments(configs, endpoint_list, save_directory:str = "arena-data", question_file_path: str = None):
     print(f'judge model: {configs["judge_model"]}, baseline: {configs["baseline"]}, baseline model: {configs["baseline_model"]}, reference: {configs["reference"]}, '
           + f'reference models: {configs["ref_model"]}, temperature: {configs["temperature"]}, max tokens: {configs["max_tokens"]}, pairwise: {configs["pairwise"]}')
 
@@ -164,7 +164,7 @@ def main(configs, endpoint_list, save_directory:str = "data", question_file_path
     for output_file in output_files.values():
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    existing_judgments = load_model_answers(output_dir)
+    existing_judgments = load_model_answers(os.path.join("arena-data", configs["bench_name"], "model_answer"))
 
     endpoint_info = endpoint_list[configs["judge_model"]]
 
@@ -249,9 +249,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--setting-file", type=str, default="config/judge_config.yaml")
     parser.add_argument("--endpoint-file", type=str, default="config/api_config.yaml")
+    parser.add_argument("--save-directory", type=str, default="arena-data")
     args = parser.parse_args()
     print(args)
 
     configs = make_config(args.setting_file)
     endpoint_list = make_config(args.endpoint_file)
-    main(configs, endpoint_list, 'data')
+    generate_judgments(configs, endpoint_list, args.save_directory)
