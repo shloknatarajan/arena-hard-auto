@@ -164,8 +164,8 @@ def generate_judgments(configs, endpoint_list, save_directory:str = "arena-data"
     for output_file in output_files.values():
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    existing_judgments = output_dir
-    
+    existing_judgments = load_model_answers(output_dir)
+
     endpoint_info = endpoint_list[configs["judge_model"]]
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=endpoint_info["parallel"]) as executor:
