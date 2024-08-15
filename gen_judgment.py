@@ -211,8 +211,7 @@ def generate_judgments(configs, endpoint_list, save_directory:str = "arena-data"
             future.result()
 
 """
-Allows importing functions and running arena outside of the repo itself
-Currently setup for pairwise judging
+Allows for generating configs programatically. Same idea can be applied for non-pairwise configs.
 """
 def generate_pairwise_config(baseline: str, judge: str, model_list: list[str] = None, temperature: float = 0, max_tokens: int = 4096):
     return {
@@ -228,15 +227,35 @@ def generate_pairwise_config(baseline: str, judge: str, model_list: list[str] = 
         'max_tokens': max_tokens,
         'regex_pattern': '\\[\\[([AB<>=]+)\\]\\]',
         'number_of_judgment_attempts': 2,
-        'system_prompt': (
-            "Please act as an impartial judge and evaluate the quality of the responses provided by two AI assistants to the user prompt displayed below. "
-            "You will be given assistant A's answer and assistant B's answer. Your job is to evaluate which assistant's answer is better.\n\n"
-            "Begin your evaluation by generating your own answer to the prompt. You must provide your answers before judging any answers.\n\n"
-            "When evaluating the assistants' answers, compare both assistants' answers with your answer. You must identify and correct any mistakes or inaccurate information.\n\n"
-            "Then consider if the assistants' answers are helpful, relevant, and concise. Helpful means the answer correctly responds to the prompt or follows the instructions. "
-            "Note when user prompt has any ambiguity or more than one interpretation, it is more helpful and appropriate to ask for clarifications or more information from the user than providing an answer based on assumptions. "
-            "Relevant means all parts of the response closely connect or are appropriate to the user prompt. "
-            "Concise means the answer provides necessary information in a clear and succinct manner without unnecessary details or redundancy."
+        "system_prompt": (
+            "Please act as an impartial judge and evaluate the quality of the responses "
+            "provided by two AI assistants to the user prompt displayed below. You will "
+            "be given assistant A's answer and assistant B's answer. Your job is to "
+            "evaluate which assistant's answer is better.\n\n"
+            "Begin your evaluation by generating your own answer to the prompt. You must "
+            "provide your answers before judging any answers.\n\n"
+            "When evaluating the assistants' answers, compare both assistants' answers "
+            "with your answer. You must identify and correct any mistakes or inaccurate "
+            "information.\n\n"
+            "Then consider if the assistant's answers are helpful, relevant, and concise. "
+            "Helpful means the answer correctly responds to the prompt or follows the "
+            "instructions. Note when user prompt has any ambiguity or more than one "
+            "interpretation, it is more helpful and appropriate to ask for clarifications "
+            "or more information from the user than providing an answer based on assumptions. "
+            "Relevant means all parts of the response closely connect or are appropriate "
+            "to what is being asked. Concise means the response is clear and not verbose "
+            "or excessive.\n\n"
+            "Then consider the creativity and novelty of the assistant's answers when needed. "
+            "Finally, identify any missing important information in the assistants' answers "
+            "that would be beneficial to include when responding to the user prompt.\n\n"
+            "After providing your explanation, you must output only one of the following "
+            "choices as your final verdict with a label:\n\n"
+            "1. Assistant A is significantly better: [[A>>B]]\n"
+            "2. Assistant A is slightly better: [[A>B]]\n"
+            "3. Tie, relatively the same: [[A=B]]\n"
+            "4. Assistant B is slightly better: [[B>A]]\n"
+            "5. Assistant B is significantly better: [[B>>A]]\n\n"
+            "Example output: \"My final verdict is tie: [[A=B]]\"."
         ),
         "prompt_template": ["<|User Prompt|>\n{question_1}\n\n<|The Start of Assistant A's Answer|>\n{answer_1}\n<|The End of Assistant A's Answer|>\n\n<|The Start of Assistant B's Answer|>\n{answer_2}\n<|The End of Assistant B's Answer|>"],
         'model_list': model_list,

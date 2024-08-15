@@ -69,6 +69,8 @@ def load_model_answers(answer_dir: str):
     model_answers = {}
 
     for filename in filenames:
+        if 'arena_hard_battles' in filename or 'bootstrapping_results' in filename:
+            continue
         model_name = os.path.basename(filename)[:-6]
         answer = {}
         with open(filename) as fin:
