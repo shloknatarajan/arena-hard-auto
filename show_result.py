@@ -267,7 +267,7 @@ def rank_model_performance(bench_name="arena-hard-v0.1", judge_name="gpt-4-1106-
         stats['date'] = date_str[:4] + '-' + date_str[4:6] + '-' + date_str[6:]
         stats.to_csv(f"leaderboard/arena_hard_leaderboard_{date_str}.csv", index=False)
 
-    return list(stats['model']) # return power ranking of models
+    return dict(zip(stats['model'], stats['score'])) # power ranking
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -284,5 +284,5 @@ if __name__ == "__main__":
     parser.add_argument("--save-directory", type=str, default="arena-data")
     args = parser.parse_args()
     print(args)
-    power_ranking = rank_model_performance(**vars(args))
-    print(f"Power Ranking: {power_ranking}")
+    model_score_dict = rank_model_performance(**vars(args))
+    print(f"Model Scores: {model_score_dict}")
